@@ -4,12 +4,17 @@
 
 # Import libraries
 
-import pygame, random, copy
-
+import pygame, random, copy, os, time
 # Initializing the pygame screen variables.
-
 pygame.init()
+# Putting the window in the center of the screen
+screen_w = pygame.display.Info().current_w
+screen_h = pygame.display.Info().current_h
+x = round((screen_w - 820) / 2)
+y = round((screen_h - 500) / 2 * 0.8)  # 80 % of the actual height
+os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (x,y)
 screen = pygame.display.set_mode((820, 500))  # Creating the display screen.
+
 
 # Initializing board variables
 
@@ -61,6 +66,11 @@ PlayerAIs.append(AggressiveAndy)
 PlayerColors.append([0, 1, 1])
 PlayerNames.append("Aggressive Andy")
 
+def importAI(AIFileName, AIFunc, AIColor, AIName): # A function for importing your AI. Do not include .py in the file name. Be sure that AIFileName and AIFunc are strings
+    exec("from " + AIFileName + " import " + AIFunc)
+    exec("PlayerAIs.append(" + AIFunc + ")")
+    PlayerColors.append(AIColor)
+    PlayerNames.append(AIName)
 
 # from yourFileName import yourAI
 # PlayerAIs.append(yourAI)
@@ -207,18 +217,25 @@ def get_square_color(square):
 def display(screen):
     cell_width = 20
     screen.fill([0, 0, 0])  # Clears the screen with black.
-
+    pygame.draw.rect(screen, [63, 63, 63], [40, 40, 420, 420])
+    pygame.draw.rect(screen, [200, 200, 200], [46, 46, 408, 408])
     # Drawing the board
     for i in range(size):
         for j in range(size):
             square = board[i][j][:4]
-
             # Determining the color of each square.
             color = [min(255, int(255 * (1 - 1 / (2 ** (get_square_color(square)[0] / 1.5))))),
                      min(255, int(255 * (1 - 1 / (2 ** (get_square_color(square)[1] / 1.5))))),
                      min(255, int(255 * (1 - 1 / (2 ** (get_square_color(square)[2] / 1.5)))))]
 
-            pygame.draw.rect(screen, color, [50 + (cell_width * i), 50 + (cell_width * j),  cell_width, cell_width])  # Draws the square.
+            pygame.draw.rect(screen, color, [50 + (cell_width * i), 50 + (cell_width * j), cell_width,
+                                             cell_width])  # Draws the square.
+
+    for wall in walls:
+        pygame.draw.line(screen, (100, 100, 100), [wall[0][0]*cell_width+50-1, wall[0][1]*cell_width+50-1], [wall[1][0]*cell_width+50-1, wall[1][1]*cell_width+50-1], width=8)
+
+    for i in range(size):
+        for j in range(size):
             # Determining whether there is a border.
             player = whose_square(i, j)
             neighbors = [[-1, 0], [0, -1], [1, 0], [0, 1]]
@@ -236,9 +253,6 @@ def display(screen):
                              50 + (cell_width//2-1) + cell_width * j + (cell_width//2-1) * neighbor[1] - (cell_width//2-1) * abs(neighbor[0]),
                              ((cell_width -2) * abs(neighbor[1])) + 2,
                              ((cell_width -2) * abs(neighbor[0])) + 2])
-    for wall in walls:
-        pygame.draw.line(screen, (100, 100, 100), [wall[0][0]*cell_width+50-1, wall[0][1]*cell_width+50-1], [wall[1][0]*cell_width+50-1, wall[1][1]*cell_width+50-1], width=6)
-
     for player_index in range(4):  # Displays the points of each player.
         name = PlayerNames[PlayerNumbers[player_index]]
         color = [colors[player_index][0] * 255, colors[player_index][1] * 255, colors[player_index][2] * 255]
@@ -259,6 +273,8 @@ def decay():  # Runs the decay step.
                 board[i][j][player] *= .96
                 if board[i][j][player] > 0:
                     board[i][j][player] -= .01
+                    if board[i][j][player] < 0:
+                        board[i][j][player] = 0
 
 
 def run_round(screen):  # Runs one turn of the game.
@@ -297,6 +313,7 @@ def run_round(screen):  # Runs one turn of the game.
 
 display(screen)
 pygame.display.flip()
+time.sleep((1))
 # Here's some added bgm for you
 song_names = ["Lensko - Titsepoken 2015 [NCS Release].mp3",
               "Tobu & Itro - Sunburst [NCS Release].mp3",
@@ -306,10 +323,21 @@ song_names = ["Lensko - Titsepoken 2015 [NCS Release].mp3",
               "Verm - Explode [NCS Release].mp3",
               "Warptech - Last Summer [NCS Release].mp3"]
 channel = pygame.mixer.find_channel()
+channel.set_volume(.8)
 channel.play(pygame.mixer.Sound("Game Music/" + random.choice(song_names)))
 run_round(screen)
 for i in range(4):
     print(PlayerNames[PlayerNumbers[i]] + ": " + str(scores[i] + calculate_score(i)))
+for i in range(80,10,-1):
+    channel.set_volume(i/100)
+    time.sleep(.01)
+flag = True
+while flag:
+    if not channel.get_busy():
+        channel.play(pygame.mixer.Sound("Game Music/" + random.choice(song_names)))
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and pygame.K_RETURN in pygame.key.get_pressed()):
+            flag = False
+            break
 channel.stop()
-input("Press enter to quit")
 pygame.quit()
