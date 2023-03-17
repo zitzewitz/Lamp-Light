@@ -332,7 +332,7 @@ def run_round(screen):  # Runs one turn of the game.
 
     display(screen)  # Draws the screen
 
-    if round_number >= 1:
+    if round_number >= 300:
         return
 
     pygame.display.flip()  # Updates the screen.
