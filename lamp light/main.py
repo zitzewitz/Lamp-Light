@@ -37,6 +37,9 @@ from SampleAIs import RandomRandy
 from SampleAIs import CenterCarly
 from SampleAIs import ProtectivePeter
 from SampleAIs import AggressiveAndy
+from SampleAIs import SillySnake
+from SampleAIs import RightSnake
+from SampleAIs import SetSnake
 
 PlayerAIs.append(NihilNelly)
 PlayerColors.append([0, 0, 0])
@@ -66,11 +69,26 @@ PlayerAIs.append(AggressiveAndy)
 PlayerColors.append([0, 1, 1])
 PlayerNames.append("Aggressive Andy")
 
+PlayerAIs.append(SillySnake)
+PlayerColors.append([1, .5, 0])
+PlayerNames.append("Silly Snake")
+
+PlayerAIs.append(RightSnake)
+PlayerColors.append([.2, .6, .4])
+PlayerNames.append("Right Snake")
+
+PlayerAIs.append(SetSnake)
+PlayerColors.append([.4, .2, .6])
+PlayerNames.append("Set Snake")
+
+
 def importAI(AIFileName, AIFunc, AIColor, AIName): # A function for importing your AI. Do not include .py in the file name. Be sure that AIFileName and AIFunc are strings
     exec("from " + AIFileName + " import " + AIFunc)
     exec("PlayerAIs.append(" + AIFunc + ")")
     PlayerColors.append(AIColor)
     PlayerNames.append(AIName)
+
+importAI("SampleAIs", "DarkestDandy", [.3,.3,.5], "Darkest Dandy")
 
 # from yourFileName import yourAI
 # PlayerAIs.append(yourAI)
@@ -282,7 +300,22 @@ def run_round(screen):  # Runs one turn of the game.
 
     moves = []  # Each move is of the form [row, col].
     for i in range(4):
-        moves.append(Players[i](process_board(i), copy.copy(walls)))# Getting the moves of each player.
+        start = time.time_ns() # Your function must return a response within .1 seconds
+        try:
+            moves.append(Players[i](process_board(i), copy.copy(walls)))# Getting the moves of each player.
+        except:
+            try:
+                moves.append(Players[i](process_board(i))) # In case you forgot the walls argument
+            except:
+                print("Your Function is throwing an error please check it. Your strategy will forfet its turn.")
+                print(process_board(i))
+                print(walls)
+                # This is for your debugging purposes
+                moves.append([-1,-1])
+        stop = time.time_ns()
+        if stop - start > 100000000:
+            print("Your function is taking too long: " + str(PlayerNames[i]))
+
 
     banned_indexes = []  # Checking whether all the moves are legal
     for i in range(4):
@@ -299,7 +332,7 @@ def run_round(screen):  # Runs one turn of the game.
 
     display(screen)  # Draws the screen
 
-    if round_number >= 300:
+    if round_number >= 1:
         return
 
     pygame.display.flip()  # Updates the screen.
