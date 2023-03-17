@@ -314,7 +314,7 @@ def run_round(screen):  # Runs one turn of the game.
                 moves.append([-1,-1])
         stop = time.time_ns()
         if stop - start > 100000000:
-            print("Your function is taking too long: " + str(PlayerNames[i]))
+            print("Your function is taking too long: " + str(PlayerNames[PlayerNumbers[i]]))
 
 
     banned_indexes = []  # Checking whether all the moves are legal
